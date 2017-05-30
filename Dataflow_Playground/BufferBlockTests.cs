@@ -32,11 +32,30 @@ namespace Dataflow_Playground
             results.Should().Contain(Enumerable.Range(0, 3));
         }
 
+        [Test]
+        public async Task BufferBlock_Limit()
+        {
+            var bufferBlock = new BufferBlock<int>(new DataflowBlockOptions { BoundedCapacity = 1 });
+            var actionBlock = new ActionBlock<int>(
+                val => TraceHelper.TraceWithTreadId($"Received value {val}. DateTime: {System.DateTime.UtcNow}"),
+                new ExecutionDataflowBlockOptions { BoundedCapacity = 1 });
+
+            bufferBlock.LinkTo(actionBlock, new DataflowLinkOptions { PropagateCompletion = true });
+
+            foreach (var i in Enumerable.Range(0, 100))
+            {
+                await bufferBlock.SendAsync(i);
+            }
+
+            bufferBlock.Complete();
+            await actionBlock.Completion;
+        }
+
 
         [Test]
         public async Task BufferBlock_PostSynchronousAndReceiveAsync()
         {
-            IImmutableList<int> exceptedEntries = ImmutableList.Create<int>(Enumerable.Range(0, 3).ToArray());
+            IImmutableList<int> exceptedEntries = ImmutableList.Create(Enumerable.Range(0, 3).ToArray());
 
             var cts = new System.Threading.CancellationTokenSource();
 
@@ -55,14 +74,12 @@ namespace Dataflow_Playground
 
             do
             {
-                System.Diagnostics.Trace.TraceInformation($" ThreadID: {System.Threading.Thread.CurrentThread.ManagedThreadId}");
                 var entry = await bufferBlock.ReceiveAsync().ConfigureAwait(false);
-
+                TraceHelper.TraceWithTreadId($"Receiving data {entry}");
                 // Check if the polled value is included in the expected list
                 exceptedEntries.Should().Contain(entry);
             }
             while (await bufferBlock.OutputAvailableAsync());
-
 
             // wait for completion
             if (t.Wait(System.TimeSpan.FromMilliseconds(500)) == false)
