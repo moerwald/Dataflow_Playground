@@ -52,6 +52,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ActionBlockTest.cs" />
     <Compile Include="TraceHelper.cs" />
     <Compile Include="TransformBlockTests.cs" />
     <Compile Include="BufferBlockTests.cs" />
