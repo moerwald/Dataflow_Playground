@@ -54,6 +54,9 @@ namespace Dataflow_Playground
         public void UseMultipleActionBlocks()
         {
 
+            const int EntriesToGenerate = 1000;
+            const int ActionBlockToGenerate = 10;
+
             Func<int, Task> actionPerformedByAllBlocks = async i =>
             {
                 await Task.Delay(10);
@@ -63,24 +66,25 @@ namespace Dataflow_Playground
             List<ActionBlock<int>> abList = new List<ActionBlock<int>>();
 
 
-            foreach (var x in Enumerable.Range(0, 10))
+            foreach (var x in Enumerable.Range(0, ActionBlockToGenerate))
             {
                 abList.Add(new ActionBlock<int>(
                     actionPerformedByAllBlocks,
-                    new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 10, BoundedCapacity = 1 /* Non greedy block*/, NameFormat = $"ActionBlock[{x}]" }));
+                    new ExecutionDataflowBlockOptions { BoundedCapacity = 1 /* Non greedy block*/, NameFormat = $"ActionBlock[{x}]" }));
             }
 
-            var bb = new BufferBlock<int>(new DataflowBlockOptions { BoundedCapacity = 10000, NameFormat = "BufferBlock" });
+
+            var bb = new BufferBlock<int>(
+                new DataflowBlockOptions {
+                    BoundedCapacity = EntriesToGenerate,
+                    NameFormat = "BufferBlock" });
 
             foreach (var ab in abList)
             {
                 bb.LinkTo(ab, new DataflowLinkOptions { PropagateCompletion = true });
             }
 
-            foreach (var x in Enumerable.Range(0, 1000))
-            {
-                bb.Post(x);
-            }
+            Enumerable.Range(0, EntriesToGenerate).Select(i => bb.Post(i));
 
             bb.Complete(); // Signal the mesh that we are done
 
@@ -93,7 +97,5 @@ namespace Dataflow_Playground
                 return abList.Select(ab => ab.Completion).ToArray();
             }
         }
-
-      
     }
 }
