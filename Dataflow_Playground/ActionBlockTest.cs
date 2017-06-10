@@ -12,12 +12,13 @@ namespace Dataflow_Playground
     {
 
         [Test]
+        [Description("Simplest way to use action block -> post messages inside, complete posting and wait until all messages are computed.")]
         public void ActionRunsInOneTask()
         {
             ActionBlock<int> ab = new ActionBlock<int>(i =>
             {
-                 TraceHelper.TraceWithTreadId($"{i}");
-             });
+                TraceHelper.TraceWithTreadId($"{i}");
+            });
 
             foreach (var x in Enumerable.Range(1, 10))
             {
@@ -30,14 +31,15 @@ namespace Dataflow_Playground
         }
 
         [Test]
+        [Description("Action block uses multiple task to compute incoming messages.")]
         public void ActionRunWithMultipleTasks()
         {
             ActionBlock<int> ab = new ActionBlock<int>(async i =>
             {
-                await Task.Delay(500);
+                await Task.Delay(50);
                 TraceHelper.TraceWithTreadId($"{i}");
 
-            },new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 10, MaxMessagesPerTask = 1  });
+            }, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 10, MaxMessagesPerTask = 1 });
 
             foreach (var x in Enumerable.Range(1, 100))
             {
@@ -51,34 +53,37 @@ namespace Dataflow_Playground
 
 
         [Test]
+        [Description("Build a load balancer. Bufferblock takes incoming messages, and forwards them to a free action block. The action blocks are non-greedy -> means they don't store ")]
         public void UseMultipleActionBlocks()
         {
-
             const int EntriesToGenerate = 1000;
             const int ActionBlockToGenerate = 10;
 
+            // Method to perform by all action blocks
             Func<int, Task> actionPerformedByAllBlocks = async i =>
             {
                 await Task.Delay(10);
                 TraceHelper.TraceWithTreadId($" Number is {i}");
             };
 
+            // Add blocks to list
             List<ActionBlock<int>> abList = new List<ActionBlock<int>>();
-
-
             foreach (var x in Enumerable.Range(0, ActionBlockToGenerate))
             {
                 abList.Add(new ActionBlock<int>(
                     actionPerformedByAllBlocks,
-                    new ExecutionDataflowBlockOptions { BoundedCapacity = 1 /* Non greedy block*/, NameFormat = $"ActionBlock[{x}]" }));
+                    new ExecutionDataflowBlockOptions { BoundedCapacity = 1 /* Non greedy block*/, NameFormat = $"ActionBlock[{x}]", }));
             }
 
-
+            // In-buffer
             var bb = new BufferBlock<int>(
-                new DataflowBlockOptions {
+                new DataflowBlockOptions
+                {
                     BoundedCapacity = EntriesToGenerate,
-                    NameFormat = "BufferBlock" });
+                    NameFormat = "BufferBlock"
+                });
 
+            // Link action blocks to buffer
             foreach (var ab in abList)
             {
                 bb.LinkTo(ab, new DataflowLinkOptions { PropagateCompletion = true });
@@ -90,7 +95,6 @@ namespace Dataflow_Playground
 
             Task.WaitAll(GetTasksFromActionBlocks()); // Wait for action blocks to get finished
 
-
             // Helpers
             Task[] GetTasksFromActionBlocks()
             {
@@ -99,3 +103,7 @@ namespace Dataflow_Playground
         }
     }
 }
+
+
+
+
