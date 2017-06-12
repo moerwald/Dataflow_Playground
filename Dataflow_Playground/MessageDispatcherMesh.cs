@@ -14,6 +14,7 @@ namespace Dataflow_Playground
     public class MessageDispatcherMesh
     {
 
+#if Uncomment_Until_Code_Is_Ready
         static class MessageTypes
         {
             internal static class WriteToConsole
@@ -130,6 +131,8 @@ namespace Dataflow_Playground
                 }
             }
         }
+
+#endif
     }
 
 }

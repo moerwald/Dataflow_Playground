@@ -11,38 +11,40 @@ namespace Dataflow_Playground
     [TestFixture]
     public class LinkToWithPredicatesTest
     {
+
+        private List<ActionBlock<int>> productionLines = new List<ActionBlock<int>>();
+
         [Test]
-        public async Task yyy ()
+        public void LinkTo_WithPredicate ()
         {
-            System.Diagnostics.Debugger.Break();
-            Random rnd = new Random();
 
-            ITargetBlock<int> temp = BuildPipeline(5);
+            ITargetBlock<int> fabricInput = BuildPipeline(NumProductionLines: 5);
 
-            foreach (var i in Enumerable.Range(0,20))
+            foreach (var i in Enumerable.Range(0,10))
             {
-                temp.Post(i);
+                fabricInput.Post(i);
             }
 
-            temp.Complete();
-            await Task.Delay(250); // Give worker time the consume messages
+            fabricInput.Complete();
+            if (Task.WaitAll(this.productionLines.Select(actionBlock => actionBlock.Completion).ToArray(),TimeSpan.FromMilliseconds(1000)) == false)
+            {
+                Assert.IsFalse(true, "Not all production lines finished within requested time period ...");
+            }
             
         }
 
-        private static ITargetBlock<int> BuildPipeline(int NumProductionLines)
+        private ITargetBlock<int> BuildPipeline(int NumProductionLines)
         {
-            var productionQueue = new BufferBlock<int>();
-
-            var opt = new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 1 };
+            var productionQueue = new BufferBlock<int>(new DataflowBlockOptions { BoundedCapacity = -1, });
             var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
 
             for (int i = 0; i < NumProductionLines; i++)
             {
-                int j = i;
-                ActionBlock<int> productionLine = new ActionBlock<int>(num => TraceHelper.TraceWithTreadId($"Processed by line {j}: {num}"));
+                int j = i; // Avoid closure uups
+                ActionBlock<int> productionLine = new ActionBlock<int>(num => TraceHelper.TraceWithTreadId($"Processed by line [{j}]: input-number={num}"));
+                this.productionLines.Add(productionLine);
 
-                productionQueue.LinkTo(productionLine, linkOptions , x => x % NumProductionLines == j);
-
+                productionQueue.LinkTo(productionLine, linkOptions , x => x % NumProductionLines == j); // Route different messages to different target blocks
             }
 
             ActionBlock<int> discardedLine = new ActionBlock<int>(num => TraceHelper.TraceWithTreadId("Discarded: {num}"));

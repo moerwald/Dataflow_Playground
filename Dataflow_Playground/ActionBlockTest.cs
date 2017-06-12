@@ -1,5 +1,4 @@
 ﻿using NUnit.Framework;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,11 +16,13 @@ namespace Dataflow_Playground
         {
             ActionBlock<int> ab = new ActionBlock<int>(i =>
             {
+                // Handle in messages
                 TraceHelper.TraceWithTreadId($"{i}");
             });
 
             foreach (var x in Enumerable.Range(1, 10))
             {
+                // Add in messages to the block
                 ab.Post(x);
             }
 
@@ -34,12 +35,12 @@ namespace Dataflow_Playground
         [Description("Action block uses multiple task to compute incoming messages.")]
         public void ActionRunWithMultipleTasks()
         {
-            ActionBlock<int> ab = new ActionBlock<int>(async i =>
+            ActionBlock<int> ab = new ActionBlock<int>(async i =>  // Receive and compute message in an async way
             {
-                await Task.Delay(50);
+                await Task.Delay(50); // Simulate "long" running action
                 TraceHelper.TraceWithTreadId($"{i}");
 
-            }, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 10, MaxMessagesPerTask = 1 });
+            }, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 10});
 
             foreach (var x in Enumerable.Range(1, 100))
             {
@@ -59,20 +60,18 @@ namespace Dataflow_Playground
             const int EntriesToGenerate = 1000;
             const int ActionBlockToGenerate = 10;
 
-            // Method to perform by all action blocks
-            Func<int, Task> actionPerformedByAllBlocks = async i =>
-            {
-                await Task.Delay(10);
-                TraceHelper.TraceWithTreadId($" Number is {i}");
-            };
-
             // Add blocks to list
             List<ActionBlock<int>> abList = new List<ActionBlock<int>>();
             foreach (var x in Enumerable.Range(0, ActionBlockToGenerate))
             {
+                var j = x; // Avoid closure uups
                 abList.Add(new ActionBlock<int>(
-                    actionPerformedByAllBlocks,
-                    new ExecutionDataflowBlockOptions { BoundedCapacity = 1 /* Non greedy block*/, NameFormat = $"ActionBlock[{x}]", }));
+                    async i =>
+                    {
+                        await Task.Delay(10);
+                        TraceHelper.TraceWithTreadId($"ActionBlock[{j}] Number is {i}");
+                    },
+                    new ExecutionDataflowBlockOptions { BoundedCapacity = 1 /* Non greedy block*/, NameFormat = $"ActionBlock[{j}]", }));
             }
 
             // In-buffer
@@ -89,13 +88,17 @@ namespace Dataflow_Playground
                 bb.LinkTo(ab, new DataflowLinkOptions { PropagateCompletion = true });
             }
 
-            Enumerable.Range(0, EntriesToGenerate).Select(i => bb.Post(i));
+            // Generate messages
+            foreach (var i in Enumerable.Range(0, EntriesToGenerate))
+            {
+                if (bb.Post(i) == false) { Assert.IsFalse(true, $"Could not post all messages to buffer block. Lost message {i}"); }
+            }
 
             bb.Complete(); // Signal the mesh that we are done
 
             Task.WaitAll(GetTasksFromActionBlocks()); // Wait for action blocks to get finished
 
-            // Helpers
+            // Local Helpers
             Task[] GetTasksFromActionBlocks()
             {
                 return abList.Select(ab => ab.Completion).ToArray();
