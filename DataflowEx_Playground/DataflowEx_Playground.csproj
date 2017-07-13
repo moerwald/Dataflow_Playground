@@ -69,9 +69,11 @@
   <ItemGroup>
     <Compile Include="AggregatorFlow.cs" />
     <Compile Include="AggregatorFlowTest.cs" />
+    <Compile Include="BroadcastTest.cs" />
     <Compile Include="BufferMonitoringTest.cs" />
     <Compile Include="CircularLinksTest.cs" />
     <Compile Include="ComplexFlowTest.cs" />
+    <Compile Include="DataDispatcherTest.cs" />
     <Compile Include="LineAggregatorFlow.cs" />
     <Compile Include="LineAggregatorFlowTest.cs" />
     <Compile Include="LinktToLeftTest.cs" />

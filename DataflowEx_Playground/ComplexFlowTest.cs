@@ -67,9 +67,6 @@ namespace DataflowEx_Playground
             intFlow.Post(2);
             intFlow.Post(3);
             await intFlow.SignalAndWaitForCompletionAsync();
-            //await intFlow.ProcessAsync(new[] { 1, 2, 3 });
-            //await intFlow.CompletionTask;
-
         }
     }
 }
