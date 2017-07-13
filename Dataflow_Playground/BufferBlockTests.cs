@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using FluentAssertions;
 using System.Linq;
 using System.Collections.Immutable;
+using System;
 
 namespace Dataflow_Playground
 {
@@ -129,6 +130,10 @@ namespace Dataflow_Playground
                 {
                     numberOfDroppedMessages++; // Should not get increased -> Bufferblock throttles incoming messages
                     TraceHelper.TraceWithTreadId($"Could not add {i} to buffer block.");
+                }
+                else
+                {
+                    TraceHelper.TraceWithTreadId($"+++ ADDED {i} to buffer block Time = {DateTime.UtcNow}");
                 }
             }
 
