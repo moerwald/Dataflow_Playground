@@ -99,10 +99,7 @@ namespace Dataflow_Playground
             Task.WaitAll(GetTasksFromActionBlocks()); // Wait for action blocks to get finished
 
             // Local Helpers
-            Task[] GetTasksFromActionBlocks()
-            {
-                return abList.Select(ab => ab.Completion).ToArray();
-            }
+            Task[] GetTasksFromActionBlocks() => abList.Select(ab => ab.Completion).ToArray();
         }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using System.Threading.Tasks.Dataflow;
@@ -12,7 +11,7 @@ namespace Dataflow_Playground
     public class LinkToWithPredicatesTest
     {
 
-        private List<ActionBlock<int>> productionLines = new List<ActionBlock<int>>();
+        private readonly List<ActionBlock<int>> productionLines = new List<ActionBlock<int>>();
 
         [Test]
         public void LinkTo_WithPredicate ()
