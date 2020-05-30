@@ -25,8 +25,7 @@ namespace Dataflow_Playground
             }
 
             // Receive the messages back from the block.
-            int value;
-            while (bufferBlock.TryReceive(out value))
+            while (bufferBlock.TryReceive(out int value))
             {
                 results.Add(value);
             }
