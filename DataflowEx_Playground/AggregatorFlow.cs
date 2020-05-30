@@ -11,12 +11,11 @@ namespace DataflowEx_Playground
         private readonly ActionBlock<KeyValuePair<string, int>> _aggregater;
 
         //Data
-        private readonly Dictionary<string, int> _dict;
+        private readonly Dictionary<string, int> _dict = new Dictionary<string, int>();
 
         public AggregatorFlow() : base(DataflowOptions.Default)
         {
             _splitter = new TransformBlock<string, KeyValuePair<string, int>>(s => this.Split(s));
-            _dict = new Dictionary<string, int>();
             _aggregater = new ActionBlock<KeyValuePair<string, int>>(p => this.Aggregate(p));
 
             //Block linking
