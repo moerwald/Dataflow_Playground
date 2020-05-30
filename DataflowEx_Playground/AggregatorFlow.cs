@@ -7,11 +7,11 @@ namespace DataflowEx_Playground
     public class AggregatorFlow : Dataflow<string>
     {
         //Blocks
-        private TransformBlock<string, KeyValuePair<string, int>> _splitter;
-        private ActionBlock<KeyValuePair<string, int>> _aggregater;
+        private readonly TransformBlock<string, KeyValuePair<string, int>> _splitter;
+        private readonly ActionBlock<KeyValuePair<string, int>> _aggregater;
 
         //Data
-        private Dictionary<string, int> _dict;
+        private readonly Dictionary<string, int> _dict;
 
         public AggregatorFlow() : base(DataflowOptions.Default)
         {
@@ -27,11 +27,8 @@ namespace DataflowEx_Playground
             RegisterChild(_aggregater);
         }
 
-        protected virtual void Aggregate(KeyValuePair<string, int> pair)
-        {
-            int oldValue;
-            _dict[pair.Key] = this._dict.TryGetValue(pair.Key, out oldValue) ? oldValue + pair.Value : pair.Value;
-        }
+        protected virtual void Aggregate(KeyValuePair<string, int> pair) =>
+            _dict[pair.Key] = this._dict.TryGetValue(pair.Key, out int oldValue) ? oldValue + pair.Value : pair.Value;
 
         protected virtual KeyValuePair<string, int> Split(string input)
         {
