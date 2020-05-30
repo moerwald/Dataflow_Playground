@@ -36,9 +36,9 @@ namespace DataflowEx_Playground
             return new KeyValuePair<string, int>(splitted[0], int.Parse(splitted[1]));
         }
 
-        public override ITargetBlock<string> InputBlock { get { return _splitter; } }
+        public override ITargetBlock<string> InputBlock => _splitter; 
 
-        public IDictionary<string, int> Result { get { return _dict; } }
+        public IDictionary<string, int> Result => _dict; 
     }
 
 }
